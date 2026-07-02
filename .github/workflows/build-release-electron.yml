@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - deemix-gui@*
+      - 'deemix-gui@*'
   pull_request:
     branches:
       - main
     paths:
-      - packages/gui/*
-      - .github/workflows/build-release-electron.yml
+      - 'packages/gui/**'
+      - '.github/workflows/build-release-electron.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -42,29 +42,44 @@ jobs:
           cache: pnpm
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.12
+          python-version: '3.12'
 
       - name: Install distutils
         run: |
           python -m pip install --upgrade pip
           pip install setuptools
 
-      - name: Set PYTHON env var
+      - name: Set PYTHON env var (Unix)
+        if: matrix.os != 'windows-2022'
         run: echo "PYTHON=$(which python)" >> $GITHUB_ENV
 
+      - name: Set PYTHON env var (Windows)
+        if: matrix.os == 'windows-2022'
+        run: echo "PYTHON=$env:PythonExe" >> $GITHUB_ENV
+
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter=deemix-gui exec pnpm electron-rebuild
 
-      - run: pnpm make
+      # Scopes the compilation to your GUI folder
+      - name: Run build script
+        run: pnpm --filter deemix-gui run build
 
+      # Run electron-rebuild inside the package context
+      - name: Rebuild Native Modules
+        run: pnpm --filter deemix-gui exec electron-rebuild
+
+      # CRITICAL FIX: Run the make command scoped to your GUI package
+      - name: Package App
+        run: pnpm --filter deemix-gui run make
+
+      # Upload files using absolute paths relative to root workspace
       - name: Upload Artifacts
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            packages/gui/out/**/Deemix.exe
-            packages/gui/out/**/Deemix*Setup.exe
+            packages/gui/out/make/**/*.exe
             packages/gui/out/make/zip/**/*.zip
             packages/gui/out/make/deb/**/*.deb
+            packages/gui/out/make/dmg/**/*.dmg
