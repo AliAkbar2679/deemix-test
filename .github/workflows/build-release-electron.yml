@@ -46,10 +46,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install setuptools
 
-      - name: Set PYTHON env var
-        # Windows use $env:PYTHON, unix systems use GITHUB_ENV append.
-        # This approach ensures node-gyp finds the python binary natively
-        run: echo "PYTHON=$(which python 2>/dev/null || where python)" >> $GITHUB_ENV
+      - name: Set PYTHON env var (Windows)
+        if: matrix.os == 'windows-2022'
+        run: |
+          $pythonPath = (Get-Command python.exe -ErrorAction SilentlyContinue).Source
+          if (-not $pythonPath) { $pythonPath = (where.exe python.exe | Select-Object -First 1) }
+          echo "PYTHON=$pythonPath" >> $env:GITHUB_ENV
+
+      # Sets the PYTHON env var safely on macOS/Linux (Bash)
+      - name: Set PYTHON env var (Unix)
+        if: matrix.os != 'windows-2022'
+        run: echo "PYTHON=$(which python)" >> $GITHUB_ENV
 
       - uses: pnpm/action-setup@v4
 
