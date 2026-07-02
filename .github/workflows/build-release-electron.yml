@@ -47,8 +47,10 @@ jobs:
           pip install setuptools
 
       - name: Set PYTHON env var
-        run: echo "PYTHON=$(which python)" >> $GITHUB_ENV
-        
+        # Windows use $env:PYTHON, unix systems use GITHUB_ENV append.
+        # This approach ensures node-gyp finds the python binary natively
+        run: echo "PYTHON=$(which python 2>/dev/null || where python)" >> $GITHUB_ENV
+
       - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
