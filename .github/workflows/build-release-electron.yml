@@ -59,8 +59,7 @@ jobs:
         if: matrix.os == 'windows-2022'
         run: echo "PYTHON=$env:PythonExe" >> $GITHUB_ENV
 
-      # CRITICAL CHANGE: Force modules to be flat and accessible everywhere
-      - run: pnpm install --no-frozen-lockfile --shamefully-hoist
+      - run: pnpm install --frozen-lockfile
 
       # This builds all packages (including webui) in the correct order from the root
       - name: Build all project workspaces
