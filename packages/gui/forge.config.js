@@ -1,3 +1,7 @@
+import makerSquirrel from '@electron-forge/maker-squirrel';
+import makerZip from '@electron-forge/maker-zip';
+import makerDeb from '@electron-forge/maker-deb';
+
 export default {
 	packagerConfig: {
 		name: "Deemix",
@@ -21,10 +25,14 @@ export default {
 		{
 			name: "@electron-forge/maker-squirrel",
 			config: {},
+			// This forces Electron Forge to use the directly imported module
+			// instead of trying to look for it inside node_modules textually
+			_maker: makerSquirrel
 		},
 		{
 			name: "@electron-forge/maker-zip",
 			config: {},
+			_maker: makerZip
 		},
 		{
 			name: "@electron-forge/maker-deb",
@@ -37,6 +45,7 @@ export default {
 					categories: ["Audio"],
 				},
 			},
+			_maker: makerDeb
 		},
 	],
 	plugins: [
