@@ -35,19 +35,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - name: Install dependencies
-        run: npm ci # This installs both dependencies and devDependencies
-
-      - name: Run Electron Forge Make
-        run: npm run make
-
-      - name: Set up Python
+      
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.12
@@ -58,12 +47,32 @@ jobs:
           pip install setuptools
 
       - name: Set PYTHON env var
-        run: echo "PYTHON=$(which python)" >> $GITHUB_ENV
+        # Windows use $env:PYTHON, unix systems use GITHUB_ENV append.
+        # This approach ensures node-gyp finds the python binary natively
+        run: echo "PYTHON=$(which python 2>/dev/null || where python)" >> $GITHUB_ENV
 
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter=deemix-gui exec pnpm electron-rebuild
+      - uses: pnpm/action-setup@v4
 
-      - run: pnpm make
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # 1. Install all monorepo dependencies safely using your pnpm-lock.yaml
+      - name: Install Monorepo Dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 2. Build the dependencies first (like webui) so the GUI package has assets to copy
+      - name: Build Web UI assets
+        run: pnpm --filter deemix-webui build
+
+      # 3. Build the main/preload TS modules inside the gui directory 
+      - name: Build Electron Main Source
+        run: pnpm --filter deemix-gui build
+
+      # 4. Trigger Electron Forge via pnpm filtering inside its proper package path
+      - name: Run Electron Forge Make
+        run: pnpm --filter deemix-gui make
 
       - name: Upload Artifacts
         uses: softprops/action-gh-release@v2
