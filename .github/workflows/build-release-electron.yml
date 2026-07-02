@@ -65,13 +65,15 @@ jobs:
       - name: Build all project workspaces
         run: pnpm -r run build
 
-      # CRITICAL CHANGE: Force all following steps to run inside the GUI folder natively
-      - name: Rebuild and Package App
-        defaults:
-          run:
-            working-directory: packages/gui
+      # CRITICAL FIXED STEPS: Explicitly stepping into the folder using 'cd'
+      - name: Rebuild Native Modules
         run: |
+          cd packages/gui
           pnpm exec electron-rebuild
+
+      - name: Package App
+        run: |
+          cd packages/gui
           pnpm run make
 
       # Upload files using absolute paths relative to root workspace
