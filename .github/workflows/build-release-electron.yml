@@ -75,8 +75,20 @@ jobs:
           cd packages/gui
           pnpm run make
 
-      # CRITICAL FIX: Broadened patterns to find files regardless of capitalization
-      - name: Upload Artifacts
+      # NEW CRITICAL STEP: Saves files directly to the workflow run page for testing
+      - name: Upload Test Artifacts (No Tag Needed)
+        uses: actions/upload-artifact@v4
+        with:
+          name: deemix-gui-build-${{ matrix.os }}
+          path: |
+            packages/gui/out/make/**/*.exe
+            packages/gui/out/make/**/*.zip
+            packages/gui/out/make/**/*.deb
+            packages/gui/out/make/**/*.dmg
+          if-no-files-found: error
+
+      # This remains active and will only trigger later when you push a real version tag
+      - name: Upload Release Artifacts
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
