@@ -35,8 +35,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Setup Python
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.12
@@ -46,36 +51,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install setuptools
 
-      - name: Set PYTHON env var (Windows)
-        if: matrix.os == 'windows-2022'
-        run: |
-          $pythonPath = (Get-Command python.exe -ErrorAction SilentlyContinue).Source
-          if (-not $pythonPath) { $pythonPath = (where.exe python.exe | Select-Object -First 1) }
-          echo "PYTHON=$pythonPath" >> $env:GITHUB_ENV
-
-      # Sets the PYTHON env var safely on macOS/Linux (Bash)
-      - name: Set PYTHON env var (Unix)
-        if: matrix.os != 'windows-2022'
+      - name: Set PYTHON env var
         run: echo "PYTHON=$(which python)" >> $GITHUB_ENV
 
-      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter=deemix-gui exec pnpm electron-rebuild
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-
-      # 1. Install all monorepo dependencies safely using your pnpm-lock.yaml
-      - name: Install Monorepo Dependencies
-        run: pnpm install --frozen-lockfile
-
-      # 3. Build the main/preload TS modules inside the gui directory 
-      - name: Build Electron Main Source
-        run: pnpm --filter deemix-gui build
-
-      # 4. Trigger Electron Forge via pnpm filtering inside its proper package path
-      - name: Run Electron Forge Make
-        run: pnpm --filter deemix-gui make
+      - run: pnpm make
 
       - name: Upload Artifacts
         uses: softprops/action-gh-release@v2
