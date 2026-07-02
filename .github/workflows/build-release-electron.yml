@@ -1,6 +1,7 @@
 name: Build and Publish Electron GUI
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - deemix-gui@*
