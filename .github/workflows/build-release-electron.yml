@@ -59,7 +59,6 @@ jobs:
         if: matrix.os == 'windows-2022'
         run: echo "PYTHON=$env:PythonExe" >> $GITHUB_ENV
 
-      # CRITICAL CHANGE: Tells pnpm it's okay to download our newly added lodash dependency
       - run: pnpm install --no-frozen-lockfile
 
       # This builds all packages (including webui) in the correct order from the root
@@ -76,13 +75,13 @@ jobs:
           cd packages/gui
           pnpm run make
 
-      # Upload files using absolute paths relative to root workspace
+      # CRITICAL FIX: Broadened patterns to find files regardless of capitalization
       - name: Upload Artifacts
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
             packages/gui/out/make/**/*.exe
-            packages/gui/out/make/zip/**/*.zip
-            packages/gui/out/make/deb/**/*.deb
-            packages/gui/out/make/dmg/**/*.dmg
+            packages/gui/out/make/**/*.zip
+            packages/gui/out/make/**/*.deb
+            packages/gui/out/make/**/*.dmg
