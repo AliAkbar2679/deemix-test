@@ -69,10 +69,6 @@ jobs:
       - name: Install Monorepo Dependencies
         run: pnpm install --frozen-lockfile
 
-      # 2. Build the dependencies first (like webui) so the GUI package has assets to copy
-      - name: Build Web UI assets
-        run: pnpm --filter deemix-webui build
-
       # 3. Build the main/preload TS modules inside the gui directory 
       - name: Build Electron Main Source
         run: pnpm --filter deemix-gui build
