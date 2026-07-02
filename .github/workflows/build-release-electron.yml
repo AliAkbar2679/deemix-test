@@ -61,15 +61,15 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # Scopes the compilation to your GUI folder
-      - name: Run build script
-        run: pnpm --filter deemix-gui run build
+      # CRITICAL NEW STEP: This builds all packages (including webui) in the correct order
+      - name: Build all project workspaces
+        run: pnpm -r run build
 
-      # Run electron-rebuild inside the package context
+      # Rebuild Native Modules inside the package context
       - name: Rebuild Native Modules
         run: pnpm --filter deemix-gui exec electron-rebuild
 
-      # CRITICAL FIX: Run the make command scoped to your GUI package
+      # Run the make command scoped to your GUI package
       - name: Package App
         run: pnpm --filter deemix-gui run make
 
